@@ -1,0 +1,38 @@
+# CMake build directories
+/build*/
+/out/
+/cmake-build-*/
+
+# In-source CMake output
+/CMakeCache.txt
+/CMakeFiles/
+/cmake_install.cmake
+/compile_commands.json
+/CTestTestfile.cmake
+/_deps/
+
+# Visual Studio
+/.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Local Codex guidance
+/AGENTS.md
+/.agents/
+
+# Compiled output
+*.obj
+*.o
+*.pdb
+*.ilk
+*.exe
+*.dll
+*.lib
+*.exp
+
+# Operating-system and editor files
+.DS_Store
+Thumbs.db
+*~
