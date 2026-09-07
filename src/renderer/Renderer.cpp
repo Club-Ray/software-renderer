@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <limits>
 #include <stdexcept>
 
 namespace
@@ -92,6 +93,73 @@ void Renderer::DrawLine(int x0, int y0, int x1, int y1, std::uint32_t color)
         {
             error += dx;
             y0 += stepY;
+        }
+    }
+}
+
+void Renderer::fill_triangle(
+    int x0, int y0, std::uint32_t color0,
+    int x1, int y1, std::uint32_t color1,
+    int x2, int y2, std::uint32_t color2)
+{
+    const int minX = std::max(0, std::min({x0, x1, x2}));
+    const int maxX = std::min(width_ - 1, std::max({x0, x1, x2}));
+    const int minY = std::max(0, std::min({y0, y1, y2}));
+    const int maxY = std::min(height_ - 1, std::max({y0, y1, y2}));
+
+    const double denominator =
+        static_cast<double>(y1 - y2) * (x0 - x2) +
+        static_cast<double>(x2 - x1) * (y0 - y2);
+
+    if (denominator == 0.0)
+    {
+        return;
+    }
+
+    for (int y = minY; y <= maxY; ++y)
+    {
+        for (int x = minX; x <= maxX; ++x)
+        {
+            const double weight0 =
+                (static_cast<double>(y1 - y2) * (x - x2) +
+                 static_cast<double>(x2 - x1) * (y - y2)) /
+                denominator;
+            const double weight1 =
+                (static_cast<double>(y2 - y0) * (x - x2) +
+                 static_cast<double>(x0 - x2) * (y - y2)) /
+                denominator;
+            const double weight2 = 1.0 - weight0 - weight1;
+
+            constexpr double epsilon = std::numeric_limits<double>::epsilon();
+
+            if (weight0 < -epsilon ||
+                weight1 < -epsilon ||
+                weight2 < -epsilon)
+            {
+                continue;
+            }
+
+            const std::uint32_t alpha = static_cast<std::uint32_t>(
+                weight0 * ((color0 >> 24u) & 0xFFu) +
+                weight1 * ((color1 >> 24u) & 0xFFu) +
+                weight2 * ((color2 >> 24u) & 0xFFu));
+            const std::uint32_t red = static_cast<std::uint32_t>(
+                weight0 * ((color0 >> 16u) & 0xFFu) +
+                weight1 * ((color1 >> 16u) & 0xFFu) +
+                weight2 * ((color2 >> 16u) & 0xFFu));
+            const std::uint32_t green = static_cast<std::uint32_t>(
+                weight0 * ((color0 >> 8u) & 0xFFu) +
+                weight1 * ((color1 >> 8u) & 0xFFu) +
+                weight2 * ((color2 >> 8u) & 0xFFu));
+            const std::uint32_t blue = static_cast<std::uint32_t>(
+                weight0 * (color0 & 0xFFu) +
+                weight1 * (color1 & 0xFFu) +
+                weight2 * (color2 & 0xFFu));
+
+            DrawPixel(
+                x,
+                y,
+                (alpha << 24u) | (red << 16u) | (green << 8u) | blue);
         }
     }
 }

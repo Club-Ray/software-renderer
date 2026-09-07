@@ -20,7 +20,15 @@ int App::run()
 void App::draw()
 {
     renderer_.clear(18, 18, 24);
-    renderer_.DrawLine(100, 100, 200, 100, 0xFFFFFFFF);
-    renderer_.DrawLine(200, 100, 150, 200, 0xFFFFFFFF);
-    renderer_.DrawLine(150, 200, 100, 100, 0xFFFFFFFF);
+
+    const int centerX = renderer_.width() / 2;
+    const int centerY = renderer_.height() / 2;
+    const int halfWidth = renderer_.width() / 4;
+    const int triangleHeight = renderer_.height() / 2;
+    const int topY = centerY - triangleHeight / 3;
+
+    renderer_.fill_triangle(
+        centerX - halfWidth, topY, 0xFFFF0000,
+        centerX + halfWidth, topY, 0xFF00FF00,
+        centerX, topY + triangleHeight, 0xFF0000FF);
 }
