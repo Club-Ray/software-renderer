@@ -1,6 +1,7 @@
 #include "renderer/Renderer.h"
 
 #include <algorithm>
+#include <cstdlib>
 #include <stdexcept>
 
 namespace
@@ -47,4 +48,50 @@ int Renderer::height() const
 const std::uint32_t* Renderer::pixels() const
 {
     return pixels_.data();
+}
+
+int Renderer::index(int x, int y) const
+{
+    return x + y * width_;
+}
+
+void Renderer::DrawPixel(int x, int y, std::uint32_t color)
+{
+    pixels_[index(x, y)] = color;
+}
+
+void Renderer::DrawLine(int x0, int y0, int x1, int y1, std::uint32_t color)
+{
+    const std::int64_t dx = std::abs(static_cast<std::int64_t>(x1) - x0);
+    const std::int64_t dy = -std::abs(static_cast<std::int64_t>(y1) - y0);
+    const int stepX = x0 < x1 ? 1 : -1;
+    const int stepY = y0 < y1 ? 1 : -1;
+    std::int64_t error = dx + dy;
+
+    // Bresenham's error selects an x step, a y step, or both for any slope.
+    while (true)
+    {
+        if (x0 >= 0 && x0 < width_ && y0 >= 0 && y0 < height_)
+        {
+            DrawPixel(x0, y0, color);
+        }
+
+        // Include both endpoints; a zero-length line draws one pixel.
+        if (x0 == x1 && y0 == y1)
+        {
+            break;
+        }
+
+        const std::int64_t twiceError = 2 * error;
+        if (twiceError >= dy)
+        {
+            error += dy;
+            x0 += stepX;
+        }
+        if (twiceError <= dx)
+        {
+            error += dx;
+            y0 += stepY;
+        }
+    }
 }

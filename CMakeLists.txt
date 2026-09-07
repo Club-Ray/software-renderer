@@ -15,6 +15,8 @@ endif()
 add_subdirectory(third_party/SDL EXCLUDE_FROM_ALL)
 
 set(SOFTWARE_RENDERER_SOURCES
+    src/App.cpp
+    src/App.h
     src/main.cpp
     src/platform/sdl/SdlPlatform.cpp
     src/platform/sdl/SdlPlatform.h

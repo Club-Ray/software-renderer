@@ -61,26 +61,18 @@ SdlPlatform::~SdlPlatform()
     SDL_Quit();
 }
 
-int SdlPlatform::run(Renderer& renderer)
+bool SdlPlatform::processEvents()
 {
-    bool isRunning = true;
-
-    while (isRunning)
+    SDL_Event event;
+    while (SDL_PollEvent(&event))
     {
-        SDL_Event event;
-        while (SDL_PollEvent(&event))
+        if (event.type == SDL_EVENT_QUIT)
         {
-            if (event.type == SDL_EVENT_QUIT)
-            {
-                isRunning = false;
-            }
+            return false;
         }
-
-        renderer.clear(18, 18, 24);
-        present(renderer);
     }
 
-    return 0;
+    return true;
 }
 
 void SdlPlatform::present(const Renderer& renderer)

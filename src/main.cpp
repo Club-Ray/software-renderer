@@ -1,7 +1,4 @@
-#include "platform/sdl/SdlPlatform.h"
-#include "renderer/Renderer.h"
-
-#include <SDL3/SDL.h>
+#include "App.h"
 
 #include <exception>
 #include <iostream>
@@ -13,9 +10,8 @@ int main(int, char**)
 
     try
     {
-        Renderer renderer(width, height);
-        SdlPlatform platform("Software Renderer", width, height);
-        return platform.run(renderer);
+        App app("Software Renderer", width, height);
+        return app.run();
     }
     catch (const std::exception& error)
     {

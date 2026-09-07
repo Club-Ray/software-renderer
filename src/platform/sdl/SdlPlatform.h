@@ -15,11 +15,10 @@ public:
     SdlPlatform(const SdlPlatform&) = delete;
     SdlPlatform& operator=(const SdlPlatform&) = delete;
 
-    int run(Renderer& renderer);
-
-private:
+    [[nodiscard]] bool processEvents();
     void present(const Renderer& renderer);
 
+private:
     SDL_Window* window_ = nullptr;
     SDL_Renderer* sdlRenderer_ = nullptr;
     SDL_Texture* texture_ = nullptr;

@@ -6,6 +6,7 @@ A 3D software renderer built from scratch in C++. Rendering happens in a CPU-own
 
 ```text
 src/
+|-- App.*           Application loop and drawing decisions
 |-- renderer/       CPU rendering and framebuffer code
 `-- platform/sdl/   Window, events, and framebuffer presentation
 ```
