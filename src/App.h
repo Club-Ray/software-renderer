@@ -1,5 +1,6 @@
 #pragma once
 
+#include "assets/Texture.h"
 #include "platform/sdl/SdlPlatform.h"
 #include "renderer/Renderer.h"
 
@@ -14,5 +15,6 @@ private:
     void draw();
 
     Renderer renderer_;
+    Texture texture_;
     SdlPlatform platform_;
 };

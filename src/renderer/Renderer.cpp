@@ -1,5 +1,7 @@
 #include "renderer/Renderer.h"
 
+#include "assets/Texture.h"
+
 #include <algorithm>
 #include <cstdlib>
 #include <limits>
@@ -160,6 +162,60 @@ void Renderer::fill_triangle(
                 x,
                 y,
                 (alpha << 24u) | (red << 16u) | (green << 8u) | blue);
+        }
+    }
+}
+
+void Renderer::fill_triangle(
+    const Texture& texture,
+    int x0, int y0, UV uv0,
+    int x1, int y1, UV uv1,
+    int x2, int y2, UV uv2)
+{
+    const int minX = std::max(0, std::min({ x0, x1, x2 }));
+    const int maxX = std::min(width_ - 1, std::max({ x0, x1, x2 }));
+    const int minY = std::max(0, std::min({ y0, y1, y2 }));
+    const int maxY = std::min(height_ - 1, std::max({ y0, y1, y2 }));
+
+    const double denominator =
+        static_cast<double>(y1 - y2) * (x0 - x2) +
+        static_cast<double>(x2 - x1) * (y0 - y2);
+
+    if (denominator == 0.0)
+    {
+        return;
+    }
+
+    for (int y = minY; y <= maxY; ++y)
+    {
+        for (int x = minX; x <= maxX; ++x)
+        {
+            const double weight0 =
+                (static_cast<double>(y1 - y2) * (x - x2) +
+                    static_cast<double>(x2 - x1) * (y - y2)) /
+                denominator;
+            const double weight1 =
+                (static_cast<double>(y2 - y0) * (x - x2) +
+                    static_cast<double>(x0 - x2) * (y - y2)) /
+                denominator;
+            const double weight2 = 1.0 - weight0 - weight1;
+
+            constexpr double epsilon = std::numeric_limits<double>::epsilon();
+
+            if (weight0 < -epsilon ||
+                weight1 < -epsilon ||
+                weight2 < -epsilon)
+            {
+                continue;
+            }
+
+            // Barycentric weights interpolate the vertex UVs at this pixel.
+            const float u = static_cast<float>(
+                weight0 * uv0.u + weight1 * uv1.u + weight2 * uv2.u);
+            const float v = static_cast<float>(
+                weight0 * uv0.v + weight1 * uv1.v + weight2 * uv2.v);
+
+            DrawPixel(x, y, texture.sampleNearest(u, v));
         }
     }
 }

@@ -17,6 +17,10 @@ add_subdirectory(third_party/SDL EXCLUDE_FROM_ALL)
 set(SOFTWARE_RENDERER_SOURCES
     src/App.cpp
     src/App.h
+    src/assets/Texture.cpp
+    src/assets/Texture.h
+    src/assets/TextureLoader.cpp
+    src/assets/TextureLoader.h
     src/main.cpp
     src/platform/sdl/SdlPlatform.cpp
     src/platform/sdl/SdlPlatform.h
@@ -35,6 +39,16 @@ source_group(
 target_compile_features(software-renderer PRIVATE cxx_std_17)
 
 target_include_directories(software-renderer PRIVATE src)
+
+# SDL already vendors stb_image; use that copy without exposing SDL internals
+# to the renderer or application code.
+target_include_directories(software-renderer SYSTEM PRIVATE
+    third_party/SDL/src/video
+)
+
+target_compile_definitions(software-renderer PRIVATE
+    SOFTWARE_RENDERER_ASSET_DIR="${CMAKE_CURRENT_SOURCE_DIR}/asset"
+)
 
 target_link_libraries(software-renderer PRIVATE SDL3::SDL3)
 

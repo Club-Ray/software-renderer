@@ -1,7 +1,13 @@
 #include "App.h"
 
+#include "assets/TextureLoader.h"
+
+#include <filesystem>
+
 App::App(const char* title, int width, int height)
     : renderer_(width, height),
+      texture_(loadTexture(
+          std::filesystem::path{SOFTWARE_RENDERER_ASSET_DIR} / "texture.jpg")),
       platform_(title, width, height)
 {
 }
@@ -28,7 +34,8 @@ void App::draw()
     const int topY = centerY - triangleHeight / 3;
 
     renderer_.fill_triangle(
-        centerX - halfWidth, topY, 0xFFFF0000,
-        centerX + halfWidth, topY, 0xFF00FF00,
-        centerX, topY + triangleHeight, 0xFF0000FF);
+        texture_,
+        centerX - halfWidth, topY, UV{0.0f, 0.0f},
+        centerX + halfWidth, topY, UV{1.0f, 0.0f},
+        centerX, topY + triangleHeight, UV{0.0f, 1.0f});
 }
