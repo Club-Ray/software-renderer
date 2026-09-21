@@ -40,4 +40,4 @@ With a multi-configuration generator such as Visual Studio, run:
 .\build\Debug\software-renderer.exe
 ```
 
-The application opens an 800 x 600 resizable window containing the blank, dark CPU framebuffer. Close the window to exit.
+The application opens an 800 x 600 resizable window showing a textured triangle. Hold W, A, S, or D to move it. Close the window to exit.

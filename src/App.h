@@ -17,4 +17,6 @@ private:
     Renderer renderer_;
     Texture texture_;
     SdlPlatform platform_;
+    float triangleX_ = 0.0f;
+    float triangleY_ = 0.0f;
 };

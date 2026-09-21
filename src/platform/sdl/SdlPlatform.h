@@ -6,6 +6,12 @@ struct SDL_Window;
 
 class Renderer;
 
+struct MovementInput
+{
+    int x = 0;
+    int y = 0;
+};
+
 class SdlPlatform
 {
 public:
@@ -16,6 +22,7 @@ public:
     SdlPlatform& operator=(const SdlPlatform&) = delete;
 
     [[nodiscard]] bool processEvents();
+    [[nodiscard]] MovementInput movementInput() const;
     void present(const Renderer& renderer);
 
 private:

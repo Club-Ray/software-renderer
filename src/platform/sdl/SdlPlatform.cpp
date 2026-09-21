@@ -75,6 +75,15 @@ bool SdlPlatform::processEvents()
     return true;
 }
 
+MovementInput SdlPlatform::movementInput() const
+{
+    const bool* keys = SDL_GetKeyboardState(nullptr);
+    return {
+        static_cast<int>(keys[SDL_SCANCODE_D]) - static_cast<int>(keys[SDL_SCANCODE_A]),
+        static_cast<int>(keys[SDL_SCANCODE_S]) - static_cast<int>(keys[SDL_SCANCODE_W])
+    };
+}
+
 void SdlPlatform::present(const Renderer& renderer)
 {
     const int pitch = renderer.width() * static_cast<int>(sizeof(std::uint32_t));

@@ -100,10 +100,15 @@ void Renderer::DrawLine(int x0, int y0, int x1, int y1, std::uint32_t color)
 }
 
 void Renderer::fill_triangle(
-    int x0, int y0, std::uint32_t color0,
-    int x1, int y1, std::uint32_t color1,
-    int x2, int y2, std::uint32_t color2)
+    const Triangle& triangle)
 {
+    const int x0 = static_cast<int>(triangle.v[0].position.x);
+    const int y0 = static_cast<int>(triangle.v[0].position.y);
+    const int x1 = static_cast<int>(triangle.v[1].position.x);
+    const int y1 = static_cast<int>(triangle.v[1].position.y);
+    const int x2 = static_cast<int>(triangle.v[2].position.x);
+    const int y2 = static_cast<int>(triangle.v[2].position.y);
+
     const int minX = std::max(0, std::min({x0, x1, x2}));
     const int maxX = std::min(width_ - 1, std::max({x0, x1, x2}));
     const int minY = std::max(0, std::min({y0, y1, y2}));
@@ -142,21 +147,21 @@ void Renderer::fill_triangle(
             }
 
             const std::uint32_t alpha = static_cast<std::uint32_t>(
-                weight0 * ((color0 >> 24u) & 0xFFu) +
-                weight1 * ((color1 >> 24u) & 0xFFu) +
-                weight2 * ((color2 >> 24u) & 0xFFu));
+                weight0 * ((triangle.v[0].color >> 24u) & 0xFFu) +
+                weight1 * ((triangle.v[1].color >> 24u) & 0xFFu) +
+                weight2 * ((triangle.v[2].color >> 24u) & 0xFFu));
             const std::uint32_t red = static_cast<std::uint32_t>(
-                weight0 * ((color0 >> 16u) & 0xFFu) +
-                weight1 * ((color1 >> 16u) & 0xFFu) +
-                weight2 * ((color2 >> 16u) & 0xFFu));
+                weight0 * ((triangle.v[0].color >> 16u) & 0xFFu) +
+                weight1 * ((triangle.v[1].color >> 16u) & 0xFFu) +
+                weight2 * ((triangle.v[2].color >> 16u) & 0xFFu));
             const std::uint32_t green = static_cast<std::uint32_t>(
-                weight0 * ((color0 >> 8u) & 0xFFu) +
-                weight1 * ((color1 >> 8u) & 0xFFu) +
-                weight2 * ((color2 >> 8u) & 0xFFu));
+                weight0 * ((triangle.v[0].color >> 8u) & 0xFFu) +
+                weight1 * ((triangle.v[1].color >> 8u) & 0xFFu) +
+                weight2 * ((triangle.v[2].color >> 8u) & 0xFFu));
             const std::uint32_t blue = static_cast<std::uint32_t>(
-                weight0 * (color0 & 0xFFu) +
-                weight1 * (color1 & 0xFFu) +
-                weight2 * (color2 & 0xFFu));
+                weight0 * (triangle.v[0].color & 0xFFu) +
+                weight1 * (triangle.v[1].color & 0xFFu) +
+                weight2 * (triangle.v[2].color & 0xFFu));
 
             DrawPixel(
                 x,
@@ -168,10 +173,15 @@ void Renderer::fill_triangle(
 
 void Renderer::fill_triangle(
     const Texture& texture,
-    int x0, int y0, UV uv0,
-    int x1, int y1, UV uv1,
-    int x2, int y2, UV uv2)
+    const Triangle& triangle)
 {
+	const int x0 = static_cast<int>(triangle.v[0].position.x);
+	const int y0 = static_cast<int>(triangle.v[0].position.y);
+	const int x1 = static_cast<int>(triangle.v[1].position.x);
+	const int y1 = static_cast<int>(triangle.v[1].position.y);
+	const int x2 = static_cast<int>(triangle.v[2].position.x);
+	const int y2 = static_cast<int>(triangle.v[2].position.y);
+
     const int minX = std::max(0, std::min({ x0, x1, x2 }));
     const int maxX = std::min(width_ - 1, std::max({ x0, x1, x2 }));
     const int minY = std::max(0, std::min({ y0, y1, y2 }));
@@ -211,9 +221,9 @@ void Renderer::fill_triangle(
 
             // Barycentric weights interpolate the vertex UVs at this pixel.
             const float u = static_cast<float>(
-                weight0 * uv0.u + weight1 * uv1.u + weight2 * uv2.u);
+                weight0 * triangle.v[0].uv.u + weight1 * triangle.v[1].uv.u + weight2 * triangle.v[2].uv.u);
             const float v = static_cast<float>(
-                weight0 * uv0.v + weight1 * uv1.v + weight2 * uv2.v);
+                weight0 * triangle.v[0].uv.v + weight1 * triangle.v[1].uv.v + weight2 * triangle.v[2].uv.v);
 
             DrawPixel(x, y, texture.sampleNearest(u, v));
         }

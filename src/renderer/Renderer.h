@@ -3,11 +3,7 @@
 #include <cstdint>
 #include <vector>
 
-struct UV
-{
-	float u;
-	float v;
-};
+#include "Triangle.h"
 
 class Texture;
 
@@ -29,14 +25,10 @@ public:
 	// 2. draw line (bresenham's line algorithm)
 	void DrawLine(int x0, int y0, int x1, int y1, std::uint32_t color);
 	void fill_triangle(
-		int x0, int y0, std::uint32_t color0,
-		int x1, int y1, std::uint32_t color1,
-		int x2, int y2, std::uint32_t color2);
+        const Triangle& triangle);
 	void fill_triangle(
 		const Texture& texture,
-		int x0, int y0, UV uv0,
-		int x1, int y1, UV uv1,
-		int x2, int y2, UV uv2);
+		const Triangle& triangle);
 
 private:
     int width_;
