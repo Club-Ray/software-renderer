@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "Triangle.h"
+#include "Object.h"
 
 class Texture;
 
@@ -29,7 +30,7 @@ public:
 	void fill_triangle(
 		const Texture& texture,
 		const Triangle& triangle);
-
+    void draw(const Object& object, const Texture* texture = nullptr, bool wireframe = false);
 private:
     int width_;
     int height_;

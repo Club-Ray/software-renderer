@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <limits>
 #include <stdexcept>
+#include <cmath>
 
 namespace
 {
@@ -225,7 +226,70 @@ void Renderer::fill_triangle(
             const float v = static_cast<float>(
                 weight0 * triangle.v[0].uv.v + weight1 * triangle.v[1].uv.v + weight2 * triangle.v[2].uv.v);
 
-            DrawPixel(x, y, texture.sampleNearest(u, v));
+            const std::uint32_t source = texture.sampleNearest(u, v);
+            const std::uint32_t alpha = source >> 24u;
+            if (alpha == 0u) continue;
+            if (alpha == 255u)
+            {
+                DrawPixel(x, y, source);
+                continue;
+            }
+
+            const std::uint32_t destination = pixels_[index(x, y)];
+            const auto blendChannel = [alpha](std::uint32_t sourceChannel,
+                                              std::uint32_t destinationChannel)
+            {
+                return (sourceChannel * alpha + destinationChannel * (255u - alpha) + 127u) / 255u;
+            };
+            const std::uint32_t red = blendChannel((source >> 16u) & 0xFFu, (destination >> 16u) & 0xFFu);
+            const std::uint32_t green = blendChannel((source >> 8u) & 0xFFu, (destination >> 8u) & 0xFFu);
+            const std::uint32_t blue = blendChannel(source & 0xFFu, destination & 0xFFu);
+            DrawPixel(x, y, 0xFF000000u | (red << 16u) | (green << 8u) | blue);
         }
     }
+}
+
+void Renderer::draw(const Object& object, const Texture* texture, bool wireframe)
+{
+    // object -> mesh -> list of triangles
+
+	for (const Triangle& triangle : object.mesh_.triangles_)
+	{
+		// Apply the object's position, rotation, and scale to the triangle's vertices.
+		Triangle transformedTriangle = triangle;
+		for (Vertex& vertex : transformedTriangle.v)
+		{
+			// Scale
+			vertex.position.x *= object.scale_.x;
+			vertex.position.y *= object.scale_.y;
+			// Rotate
+			const float cosTheta = std::cos(object.rotation_);
+			const float sinTheta = std::sin(object.rotation_);
+			const float x = vertex.position.x * cosTheta - vertex.position.y * sinTheta;
+			const float y = vertex.position.x * sinTheta + vertex.position.y * cosTheta;
+			vertex.position.x = x;
+			vertex.position.y = y;
+			// Translate
+			vertex.position.x += object.position_.x;
+			vertex.position.y += object.position_.y;
+		}
+		// Draw the transformed triangle.
+        if (wireframe)
+        {
+            constexpr std::uint32_t edgeColor = 0xFFB58DCEu;
+            for (int edge = 0; edge < 3; ++edge)
+            {
+                const Vec2 a = transformedTriangle.v[edge].position;
+                const Vec2 b = transformedTriangle.v[(edge + 1) % 3].position;
+                DrawLine(static_cast<int>(std::lround(a.x)),
+                         static_cast<int>(std::lround(a.y)),
+                         static_cast<int>(std::lround(b.x)),
+                         static_cast<int>(std::lround(b.y)), edgeColor);
+            }
+        }
+        else if (texture != nullptr)
+            fill_triangle(*texture, transformedTriangle);
+        else
+            fill_triangle(transformedTriangle);
+	}
 }

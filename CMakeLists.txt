@@ -21,6 +21,8 @@ set(SOFTWARE_RENDERER_SOURCES
     src/assets/Texture.h
     src/assets/TextureLoader.cpp
     src/assets/TextureLoader.h
+    src/assets/GothicGirlMesh.cpp
+    src/assets/GothicGirlMesh.h
     src/main.cpp
     src/platform/sdl/SdlPlatform.cpp
     src/platform/sdl/SdlPlatform.h

@@ -70,6 +70,11 @@ bool SdlPlatform::processEvents()
         {
             return false;
         }
+        if (event.type == SDL_EVENT_KEY_DOWN &&
+            event.key.scancode == SDL_SCANCODE_Q && !event.key.repeat)
+        {
+            wireframeEnabled_ = !wireframeEnabled_;
+        }
     }
 
     return true;
@@ -80,7 +85,8 @@ MovementInput SdlPlatform::movementInput() const
     const bool* keys = SDL_GetKeyboardState(nullptr);
     return {
         static_cast<int>(keys[SDL_SCANCODE_D]) - static_cast<int>(keys[SDL_SCANCODE_A]),
-        static_cast<int>(keys[SDL_SCANCODE_S]) - static_cast<int>(keys[SDL_SCANCODE_W])
+        static_cast<int>(keys[SDL_SCANCODE_S]) - static_cast<int>(keys[SDL_SCANCODE_W]),
+		- static_cast<int>(keys[SDL_SCANCODE_E]) // E
     };
 }
 

@@ -40,4 +40,4 @@ With a multi-configuration generator such as Visual Studio, run:
 .\build\Debug\software-renderer.exe
 ```
 
-The application opens an 800 x 600 resizable window showing a textured triangle. Hold W, A, S, or D to move it. Close the window to exit.
+The application opens an 800 x 600 resizable window showing the gothic girl PNG on a static 32 × 48 grid mesh. The CPU renderer transforms and rasterizes its 3,072 textured triangles, blending transparent pixels over the background. Hold W, A, S, or D to move it. Press Q to toggle between textured rendering and wireframe mode. No skeletal animation is applied. Close the window to exit.
