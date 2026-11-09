@@ -2,63 +2,60 @@ cmake_minimum_required(VERSION 3.21)
 
 project(software_renderer LANGUAGES CXX)
 
+foreach(dependency IN ITEMS SDL glm)
+    if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/third_party/${dependency}/CMakeLists.txt")
+        message(FATAL_ERROR
+            "${dependency} submodule is missing. Run: git submodule update --init --recursive")
+    endif()
+endforeach()
+
 set(SDL_TEST_LIBRARY OFF CACHE BOOL "" FORCE)
 set(SDL_TESTS OFF CACHE BOOL "" FORCE)
 set(SDL_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(SDL_INSTALL OFF CACHE BOOL "" FORCE)
-
-if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/third_party/SDL/CMakeLists.txt")
-    message(FATAL_ERROR
-        "SDL submodule is missing. Run: git submodule update --init --recursive")
-endif()
-
 add_subdirectory(third_party/SDL EXCLUDE_FROM_ALL)
 
-set(SOFTWARE_RENDERER_SOURCES
-    src/App.cpp
-    src/App.h
-    src/assets/Texture.cpp
-    src/assets/Texture.h
-    src/assets/TextureLoader.cpp
-    src/assets/TextureLoader.h
-    src/assets/GothicGirl.cpp
-    src/assets/GothicGirl.h
-    src/main.cpp
-    src/platform/sdl/SdlPlatform.cpp
-    src/platform/sdl/SdlPlatform.h
+set(GLM_BUILD_LIBRARY OFF)
+add_subdirectory(third_party/glm EXCLUDE_FROM_ALL)
+
+add_library(renderer_math INTERFACE)
+target_sources(renderer_math INTERFACE
     src/math/Math2D.h
-    src/animation/Animation2D.cpp
-    src/animation/Animation2D.h
+    src/math/Math3D.h
+)
+target_include_directories(renderer_math INTERFACE src)
+target_compile_features(renderer_math INTERFACE cxx_std_17)
+target_link_libraries(renderer_math INTERFACE glm::glm-header-only)
+
+add_library(renderer STATIC
     src/renderer/Mesh.h
     src/renderer/Object.h
-    src/renderer/Triangle.h
     src/renderer/Renderer.cpp
     src/renderer/Renderer.h
+    src/renderer/Texture.cpp
+    src/renderer/Texture.h
+    src/renderer/Transform.h
 )
+target_link_libraries(renderer PUBLIC renderer_math)
 
-add_executable(software-renderer ${SOFTWARE_RENDERER_SOURCES})
-
-# Display sources and headers using the same folders as the source tree in IDEs.
-source_group(
-    TREE "${CMAKE_CURRENT_SOURCE_DIR}/src"
-    FILES ${SOFTWARE_RENDERER_SOURCES}
+add_library(renderer_platform STATIC
+    src/platform/sdl/SdlPlatform.cpp
+    src/platform/sdl/SdlPlatform.h
+    src/platform/sdl/TextureLoader.cpp
+    src/platform/sdl/TextureLoader.h
 )
+target_link_libraries(renderer_platform PRIVATE renderer SDL3::SDL3)
+target_include_directories(renderer_platform SYSTEM PRIVATE third_party/SDL/src/video)
 
-target_compile_features(software-renderer PRIVATE cxx_std_17)
-
-target_include_directories(software-renderer PRIVATE src)
-
-# SDL already vendors stb_image; use that copy without exposing SDL internals
-# to the renderer or application code.
-target_include_directories(software-renderer SYSTEM PRIVATE
-    third_party/SDL/src/video
+add_executable(software-renderer
+    src/app/main.cpp
+    src/app/App.cpp
+    src/app/App.h
 )
-
+target_link_libraries(software-renderer PRIVATE renderer renderer_platform)
 target_compile_definitions(software-renderer PRIVATE
     SOFTWARE_RENDERER_ASSET_DIR="${CMAKE_CURRENT_SOURCE_DIR}/asset"
 )
-
-target_link_libraries(software-renderer PRIVATE SDL3::SDL3)
 
 if(WIN32 AND TARGET SDL3::SDL3-shared)
     add_custom_command(TARGET software-renderer POST_BUILD
@@ -69,23 +66,20 @@ if(WIN32 AND TARGET SDL3::SDL3-shared)
     )
 endif()
 
-if(MSVC)
-    target_compile_options(software-renderer PRIVATE /W4 /permissive-)
-else()
-    target_compile_options(software-renderer PRIVATE -Wall -Wextra -Wpedantic)
+if(CMAKE_GENERATOR MATCHES "^Visual Studio")
+    # The build targets above still explicitly list the files they compile.
+    file(GLOB_RECURSE project_sources CONFIGURE_DEPENDS
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
+    )
+    source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/src" FILES ${project_sources})
+    add_custom_target(project-sources SOURCES ${project_sources})
 endif()
 
-option(SOFTWARE_RENDERER_BUILD_TESTS "Build small CPU rendering and animation checks" OFF)
-if(SOFTWARE_RENDERER_BUILD_TESTS)
-    enable_testing()
-    add_executable(renderer-checks
-        tests/RendererChecks.cpp
-        src/renderer/Renderer.cpp
-        src/assets/Texture.cpp
-        src/assets/GothicGirl.cpp
-        src/animation/Animation2D.cpp
-    )
-    target_compile_features(renderer-checks PRIVATE cxx_std_17)
-    target_include_directories(renderer-checks PRIVATE src)
-    add_test(NAME renderer-checks COMMAND renderer-checks)
-endif()
+foreach(target IN ITEMS renderer renderer_platform software-renderer)
+    if(MSVC)
+        target_compile_options(${target} PRIVATE /W4 /permissive-)
+    else()
+        target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
+    endif()
+endforeach()

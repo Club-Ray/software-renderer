@@ -1,4 +1,4 @@
-#include "assets/Texture.h"
+#include "renderer/Texture.h"
 
 #include <algorithm>
 #include <cstddef>

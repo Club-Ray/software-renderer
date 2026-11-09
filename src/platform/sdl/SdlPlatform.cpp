@@ -1,7 +1,5 @@
 #include "platform/sdl/SdlPlatform.h"
 
-#include "renderer/Renderer.h"
-
 #include <SDL3/SDL.h>
 
 #include <stdexcept>
@@ -86,15 +84,13 @@ MovementInput SdlPlatform::movementInput() const
     return {
         static_cast<int>(keys[SDL_SCANCODE_D]) - static_cast<int>(keys[SDL_SCANCODE_A]),
         static_cast<int>(keys[SDL_SCANCODE_S]) - static_cast<int>(keys[SDL_SCANCODE_W]),
-		- static_cast<int>(keys[SDL_SCANCODE_E]) // E
+        -static_cast<int>(keys[SDL_SCANCODE_E])
     };
 }
 
-void SdlPlatform::present(const Renderer& renderer)
+void SdlPlatform::present(const std::uint32_t* pixels, int pitch)
 {
-    const int pitch = renderer.width() * static_cast<int>(sizeof(std::uint32_t));
-
-    if (!SDL_UpdateTexture(texture_, nullptr, renderer.pixels(), pitch))
+    if (!SDL_UpdateTexture(texture_, nullptr, pixels, pitch))
     {
         throw sdlError("Could not upload the CPU framebuffer");
     }

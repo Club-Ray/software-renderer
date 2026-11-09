@@ -1,16 +1,16 @@
 #pragma once
 
+#include <cstdint>
+
 struct SDL_Renderer;
 struct SDL_Texture;
 struct SDL_Window;
-
-class Renderer;
 
 struct MovementInput
 {
     int x = 0;
     int y = 0;
-    int rot = 0; // deg
+    int rotation = 0;
 };
 
 class SdlPlatform
@@ -25,7 +25,7 @@ public:
     [[nodiscard]] bool processEvents();
     [[nodiscard]] MovementInput movementInput() const;
     [[nodiscard]] bool wireframeEnabled() const { return wireframeEnabled_; }
-    void present(const Renderer& renderer);
+    void present(const std::uint32_t* pixels, int pitch);
 
 private:
     bool wireframeEnabled_ = false;

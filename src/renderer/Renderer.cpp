@@ -1,12 +1,12 @@
 #include "renderer/Renderer.h"
 
-#include "assets/Texture.h"
+#include "renderer/Texture.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstdlib>
 #include <limits>
 #include <stdexcept>
-#include <cmath>
 
 namespace
 {
@@ -59,12 +59,12 @@ int Renderer::index(int x, int y) const
     return x + y * width_;
 }
 
-void Renderer::DrawPixel(int x, int y, std::uint32_t color)
+void Renderer::drawPixel(int x, int y, std::uint32_t color)
 {
     pixels_[index(x, y)] = color;
 }
 
-void Renderer::DrawLine(int x0, int y0, int x1, int y1, std::uint32_t color)
+void Renderer::drawLine(int x0, int y0, int x1, int y1, std::uint32_t color)
 {
     const std::int64_t dx = std::abs(static_cast<std::int64_t>(x1) - x0);
     const std::int64_t dy = -std::abs(static_cast<std::int64_t>(y1) - y0);
@@ -77,7 +77,7 @@ void Renderer::DrawLine(int x0, int y0, int x1, int y1, std::uint32_t color)
     {
         if (x0 >= 0 && x0 < width_ && y0 >= 0 && y0 < height_)
         {
-            DrawPixel(x0, y0, color);
+            drawPixel(x0, y0, color);
         }
 
         // Include both endpoints; a zero-length line draws one pixel.
@@ -100,29 +100,29 @@ void Renderer::DrawLine(int x0, int y0, int x1, int y1, std::uint32_t color)
     }
 }
 
-void Renderer::fill_triangle(const Triangle& triangle)
+void Renderer::fillTriangle(const Triangle& triangle)
 {
     rasterize(triangle, nullptr);
 }
 
-void Renderer::fill_triangle(const Texture& texture, const Triangle& triangle)
+void Renderer::fillTriangle(const Texture& texture, const Triangle& triangle)
 {
     rasterize(triangle, &texture);
 }
 
 void Renderer::rasterize(const Triangle& triangle, const Texture* texture)
 {
-    const int x0 = static_cast<int>(triangle.v[0].position.x);
-    const int y0 = static_cast<int>(triangle.v[0].position.y);
-    const int x1 = static_cast<int>(triangle.v[1].position.x);
-    const int y1 = static_cast<int>(triangle.v[1].position.y);
-    const int x2 = static_cast<int>(triangle.v[2].position.x);
-    const int y2 = static_cast<int>(triangle.v[2].position.y);
+    const int x0 = static_cast<int>(triangle.vertices[0].position.x);
+    const int y0 = static_cast<int>(triangle.vertices[0].position.y);
+    const int x1 = static_cast<int>(triangle.vertices[1].position.x);
+    const int y1 = static_cast<int>(triangle.vertices[1].position.y);
+    const int x2 = static_cast<int>(triangle.vertices[2].position.x);
+    const int y2 = static_cast<int>(triangle.vertices[2].position.y);
 
-    const int minX = std::max(0, std::min({ x0, x1, x2 }));
-    const int maxX = std::min(width_ - 1, std::max({ x0, x1, x2 }));
-    const int minY = std::max(0, std::min({ y0, y1, y2 }));
-    const int maxY = std::min(height_ - 1, std::max({ y0, y1, y2 }));
+    const int minX = std::max(0, std::min({x0, x1, x2}));
+    const int maxX = std::min(width_ - 1, std::max({x0, x1, x2}));
+    const int minY = std::max(0, std::min({y0, y1, y2}));
+    const int maxY = std::min(height_ - 1, std::max({y0, y1, y2}));
 
     const double denominator =
         static_cast<double>(y1 - y2) * (x0 - x2) +
@@ -159,23 +159,23 @@ void Renderer::rasterize(const Triangle& triangle, const Texture* texture)
             if (texture == nullptr)
             {
                 const std::uint32_t alpha = static_cast<std::uint32_t>(
-                    weight0 * ((triangle.v[0].color >> 24u) & 0xFFu) +
-                    weight1 * ((triangle.v[1].color >> 24u) & 0xFFu) +
-                    weight2 * ((triangle.v[2].color >> 24u) & 0xFFu));
+                    weight0 * ((triangle.vertices[0].color >> 24u) & 0xFFu) +
+                    weight1 * ((triangle.vertices[1].color >> 24u) & 0xFFu) +
+                    weight2 * ((triangle.vertices[2].color >> 24u) & 0xFFu));
                 const std::uint32_t red = static_cast<std::uint32_t>(
-                    weight0 * ((triangle.v[0].color >> 16u) & 0xFFu) +
-                    weight1 * ((triangle.v[1].color >> 16u) & 0xFFu) +
-                    weight2 * ((triangle.v[2].color >> 16u) & 0xFFu));
+                    weight0 * ((triangle.vertices[0].color >> 16u) & 0xFFu) +
+                    weight1 * ((triangle.vertices[1].color >> 16u) & 0xFFu) +
+                    weight2 * ((triangle.vertices[2].color >> 16u) & 0xFFu));
                 const std::uint32_t green = static_cast<std::uint32_t>(
-                    weight0 * ((triangle.v[0].color >> 8u) & 0xFFu) +
-                    weight1 * ((triangle.v[1].color >> 8u) & 0xFFu) +
-                    weight2 * ((triangle.v[2].color >> 8u) & 0xFFu));
+                    weight0 * ((triangle.vertices[0].color >> 8u) & 0xFFu) +
+                    weight1 * ((triangle.vertices[1].color >> 8u) & 0xFFu) +
+                    weight2 * ((triangle.vertices[2].color >> 8u) & 0xFFu));
                 const std::uint32_t blue = static_cast<std::uint32_t>(
-                    weight0 * (triangle.v[0].color & 0xFFu) +
-                    weight1 * (triangle.v[1].color & 0xFFu) +
-                    weight2 * (triangle.v[2].color & 0xFFu));
+                    weight0 * (triangle.vertices[0].color & 0xFFu) +
+                    weight1 * (triangle.vertices[1].color & 0xFFu) +
+                    weight2 * (triangle.vertices[2].color & 0xFFu));
 
-                DrawPixel(
+                drawPixel(
                     x,
                     y,
                     (alpha << 24u) | (red << 16u) | (green << 8u) | blue);
@@ -184,16 +184,19 @@ void Renderer::rasterize(const Triangle& triangle, const Texture* texture)
 
             // Barycentric weights interpolate the vertex UVs at this pixel.
             const float u = static_cast<float>(
-                weight0 * triangle.v[0].uv.u + weight1 * triangle.v[1].uv.u + weight2 * triangle.v[2].uv.u);
+                weight0 * triangle.vertices[0].uv.x + weight1 * triangle.vertices[1].uv.x + weight2 * triangle.vertices[2].uv.x);
             const float v = static_cast<float>(
-                weight0 * triangle.v[0].uv.v + weight1 * triangle.v[1].uv.v + weight2 * triangle.v[2].uv.v);
+                weight0 * triangle.vertices[0].uv.y + weight1 * triangle.vertices[1].uv.y + weight2 * triangle.vertices[2].uv.y);
 
             const std::uint32_t source = texture->sampleNearest(u, v);
             const std::uint32_t alpha = source >> 24u;
-            if (alpha == 0u) continue;
+            if (alpha == 0u)
+            {
+                continue;
+            }
             if (alpha == 255u)
             {
-                DrawPixel(x, y, source);
+                drawPixel(x, y, source);
                 continue;
             }
 
@@ -206,43 +209,29 @@ void Renderer::rasterize(const Triangle& triangle, const Texture* texture)
             const std::uint32_t red = blendChannel((source >> 16u) & 0xFFu, (destination >> 16u) & 0xFFu);
             const std::uint32_t green = blendChannel((source >> 8u) & 0xFFu, (destination >> 8u) & 0xFFu);
             const std::uint32_t blue = blendChannel(source & 0xFFu, destination & 0xFFu);
-            DrawPixel(x, y, 0xFF000000u | (red << 16u) | (green << 8u) | blue);
+            drawPixel(x, y, 0xFF000000u | (red << 16u) | (green << 8u) | blue);
         }
     }
 }
 
 void Renderer::draw(const Object& object, const Texture* texture, bool wireframe)
 {
-    const auto& vertices = object.posedVertices_.empty()
-        ? object.mesh_.vertices : object.posedVertices_;
-    screenVertices_.resize(vertices.size());
-    const float cosine = std::cos(object.rotation_);
-    const float sine = std::sin(object.rotation_);
-    for (std::size_t i = 0; i < vertices.size(); ++i)
-    {
-        Vertex vertex = vertices[i];
-        // Local -> screen: scale, rotate around the origin, then translate.
-        const Vec2 scaled{vertex.position.x * object.scale_.x,
-                          vertex.position.y * object.scale_.y};
-        const Vec2 rotated = rotate(scaled, cosine, sine);
-        vertex.position = {rotated.x + object.position_.x,
-                           rotated.y + object.position_.y};
-        screenVertices_[i] = vertex;
-    }
+    // Until projection is implemented, draw vertices in framebuffer coordinates.
+    const auto& screenVertices = object.mesh.vertices;
 
-    for (const TriangleIndices& indices : object.mesh_.triangles)
+    for (const TriangleIndices& indices : object.mesh.triangles)
     {
-        const Triangle triangle{{screenVertices_[indices[0]],
-                                 screenVertices_[indices[1]],
-                                 screenVertices_[indices[2]]}};
+        const Triangle triangle{{screenVertices[indices[0]],
+                                  screenVertices[indices[1]],
+                                  screenVertices[indices[2]]}};
         if (wireframe)
         {
             constexpr std::uint32_t edgeColor = 0xFFB58DCEu;
             for (int edge = 0; edge < 3; ++edge)
             {
-                const Vec2 a = triangle.v[edge].position;
-                const Vec2 b = triangle.v[(edge + 1) % 3].position;
-                DrawLine(static_cast<int>(std::lround(a.x)),
+                const Vec3& a = triangle.vertices[edge].position;
+                const Vec3& b = triangle.vertices[(edge + 1) % 3].position;
+                drawLine(static_cast<int>(std::lround(a.x)),
                          static_cast<int>(std::lround(a.y)),
                          static_cast<int>(std::lround(b.x)),
                          static_cast<int>(std::lround(b.y)), edgeColor);

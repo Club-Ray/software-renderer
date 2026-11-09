@@ -1,11 +1,10 @@
 #pragma once
+
+#include <glm/vec2.hpp>
+
 #include <cmath>
 
-struct Vec2
-{
-    float x = 0.0f;
-    float y = 0.0f;
-};
+using Vec2 = glm::vec2;
 
 // Positive angles rotate clockwise in our screen coordinates (y points down).
 inline Vec2 rotate(Vec2 point, float cosine, float sine)
