@@ -21,11 +21,17 @@ set(SOFTWARE_RENDERER_SOURCES
     src/assets/Texture.h
     src/assets/TextureLoader.cpp
     src/assets/TextureLoader.h
-    src/assets/GothicGirlMesh.cpp
-    src/assets/GothicGirlMesh.h
+    src/assets/GothicGirl.cpp
+    src/assets/GothicGirl.h
     src/main.cpp
     src/platform/sdl/SdlPlatform.cpp
     src/platform/sdl/SdlPlatform.h
+    src/math/Math2D.h
+    src/animation/Animation2D.cpp
+    src/animation/Animation2D.h
+    src/renderer/Mesh.h
+    src/renderer/Object.h
+    src/renderer/Triangle.h
     src/renderer/Renderer.cpp
     src/renderer/Renderer.h
 )
@@ -67,4 +73,19 @@ if(MSVC)
     target_compile_options(software-renderer PRIVATE /W4 /permissive-)
 else()
     target_compile_options(software-renderer PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+option(SOFTWARE_RENDERER_BUILD_TESTS "Build small CPU rendering and animation checks" OFF)
+if(SOFTWARE_RENDERER_BUILD_TESTS)
+    enable_testing()
+    add_executable(renderer-checks
+        tests/RendererChecks.cpp
+        src/renderer/Renderer.cpp
+        src/assets/Texture.cpp
+        src/assets/GothicGirl.cpp
+        src/animation/Animation2D.cpp
+    )
+    target_compile_features(renderer-checks PRIVATE cxx_std_17)
+    target_include_directories(renderer-checks PRIVATE src)
+    add_test(NAME renderer-checks COMMAND renderer-checks)
 endif()

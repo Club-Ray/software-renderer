@@ -1,11 +1,12 @@
 #pragma once
-#include "Mesh.h"
+#include "renderer/Mesh.h"
 
-class Object {
-public:
-	Mesh mesh_;
-
-	Vec2 scale_ = Vec2(1,1);
-	float rotation_ = 0.0f;
-	Vec2 position_ = Vec2(0,0);
+struct Object
+{
+    Mesh mesh_;
+    // Empty for static objects. Animation writes here, leaving mesh_ intact.
+    std::vector<Vertex> posedVertices_;
+    Vec2 scale_{1.0f, 1.0f};
+    float rotation_ = 0.0f; // Radians, around the local origin.
+    Vec2 position_;
 };

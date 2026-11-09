@@ -100,8 +100,17 @@ void Renderer::DrawLine(int x0, int y0, int x1, int y1, std::uint32_t color)
     }
 }
 
-void Renderer::fill_triangle(
-    const Triangle& triangle)
+void Renderer::fill_triangle(const Triangle& triangle)
+{
+    rasterize(triangle, nullptr);
+}
+
+void Renderer::fill_triangle(const Texture& texture, const Triangle& triangle)
+{
+    rasterize(triangle, &texture);
+}
+
+void Renderer::rasterize(const Triangle& triangle, const Texture* texture)
 {
     const int x0 = static_cast<int>(triangle.v[0].position.x);
     const int y0 = static_cast<int>(triangle.v[0].position.y);
@@ -109,79 +118,6 @@ void Renderer::fill_triangle(
     const int y1 = static_cast<int>(triangle.v[1].position.y);
     const int x2 = static_cast<int>(triangle.v[2].position.x);
     const int y2 = static_cast<int>(triangle.v[2].position.y);
-
-    const int minX = std::max(0, std::min({x0, x1, x2}));
-    const int maxX = std::min(width_ - 1, std::max({x0, x1, x2}));
-    const int minY = std::max(0, std::min({y0, y1, y2}));
-    const int maxY = std::min(height_ - 1, std::max({y0, y1, y2}));
-
-    const double denominator =
-        static_cast<double>(y1 - y2) * (x0 - x2) +
-        static_cast<double>(x2 - x1) * (y0 - y2);
-
-    if (denominator == 0.0)
-    {
-        return;
-    }
-
-    for (int y = minY; y <= maxY; ++y)
-    {
-        for (int x = minX; x <= maxX; ++x)
-        {
-            const double weight0 =
-                (static_cast<double>(y1 - y2) * (x - x2) +
-                 static_cast<double>(x2 - x1) * (y - y2)) /
-                denominator;
-            const double weight1 =
-                (static_cast<double>(y2 - y0) * (x - x2) +
-                 static_cast<double>(x0 - x2) * (y - y2)) /
-                denominator;
-            const double weight2 = 1.0 - weight0 - weight1;
-
-            constexpr double epsilon = std::numeric_limits<double>::epsilon();
-
-            if (weight0 < -epsilon ||
-                weight1 < -epsilon ||
-                weight2 < -epsilon)
-            {
-                continue;
-            }
-
-            const std::uint32_t alpha = static_cast<std::uint32_t>(
-                weight0 * ((triangle.v[0].color >> 24u) & 0xFFu) +
-                weight1 * ((triangle.v[1].color >> 24u) & 0xFFu) +
-                weight2 * ((triangle.v[2].color >> 24u) & 0xFFu));
-            const std::uint32_t red = static_cast<std::uint32_t>(
-                weight0 * ((triangle.v[0].color >> 16u) & 0xFFu) +
-                weight1 * ((triangle.v[1].color >> 16u) & 0xFFu) +
-                weight2 * ((triangle.v[2].color >> 16u) & 0xFFu));
-            const std::uint32_t green = static_cast<std::uint32_t>(
-                weight0 * ((triangle.v[0].color >> 8u) & 0xFFu) +
-                weight1 * ((triangle.v[1].color >> 8u) & 0xFFu) +
-                weight2 * ((triangle.v[2].color >> 8u) & 0xFFu));
-            const std::uint32_t blue = static_cast<std::uint32_t>(
-                weight0 * (triangle.v[0].color & 0xFFu) +
-                weight1 * (triangle.v[1].color & 0xFFu) +
-                weight2 * (triangle.v[2].color & 0xFFu));
-
-            DrawPixel(
-                x,
-                y,
-                (alpha << 24u) | (red << 16u) | (green << 8u) | blue);
-        }
-    }
-}
-
-void Renderer::fill_triangle(
-    const Texture& texture,
-    const Triangle& triangle)
-{
-	const int x0 = static_cast<int>(triangle.v[0].position.x);
-	const int y0 = static_cast<int>(triangle.v[0].position.y);
-	const int x1 = static_cast<int>(triangle.v[1].position.x);
-	const int y1 = static_cast<int>(triangle.v[1].position.y);
-	const int x2 = static_cast<int>(triangle.v[2].position.x);
-	const int y2 = static_cast<int>(triangle.v[2].position.y);
 
     const int minX = std::max(0, std::min({ x0, x1, x2 }));
     const int maxX = std::min(width_ - 1, std::max({ x0, x1, x2 }));
@@ -220,13 +156,39 @@ void Renderer::fill_triangle(
                 continue;
             }
 
+            if (texture == nullptr)
+            {
+                const std::uint32_t alpha = static_cast<std::uint32_t>(
+                    weight0 * ((triangle.v[0].color >> 24u) & 0xFFu) +
+                    weight1 * ((triangle.v[1].color >> 24u) & 0xFFu) +
+                    weight2 * ((triangle.v[2].color >> 24u) & 0xFFu));
+                const std::uint32_t red = static_cast<std::uint32_t>(
+                    weight0 * ((triangle.v[0].color >> 16u) & 0xFFu) +
+                    weight1 * ((triangle.v[1].color >> 16u) & 0xFFu) +
+                    weight2 * ((triangle.v[2].color >> 16u) & 0xFFu));
+                const std::uint32_t green = static_cast<std::uint32_t>(
+                    weight0 * ((triangle.v[0].color >> 8u) & 0xFFu) +
+                    weight1 * ((triangle.v[1].color >> 8u) & 0xFFu) +
+                    weight2 * ((triangle.v[2].color >> 8u) & 0xFFu));
+                const std::uint32_t blue = static_cast<std::uint32_t>(
+                    weight0 * (triangle.v[0].color & 0xFFu) +
+                    weight1 * (triangle.v[1].color & 0xFFu) +
+                    weight2 * (triangle.v[2].color & 0xFFu));
+
+                DrawPixel(
+                    x,
+                    y,
+                    (alpha << 24u) | (red << 16u) | (green << 8u) | blue);
+                continue;
+            }
+
             // Barycentric weights interpolate the vertex UVs at this pixel.
             const float u = static_cast<float>(
                 weight0 * triangle.v[0].uv.u + weight1 * triangle.v[1].uv.u + weight2 * triangle.v[2].uv.u);
             const float v = static_cast<float>(
                 weight0 * triangle.v[0].uv.v + weight1 * triangle.v[1].uv.v + weight2 * triangle.v[2].uv.v);
 
-            const std::uint32_t source = texture.sampleNearest(u, v);
+            const std::uint32_t source = texture->sampleNearest(u, v);
             const std::uint32_t alpha = source >> 24u;
             if (alpha == 0u) continue;
             if (alpha == 255u)
@@ -251,45 +213,44 @@ void Renderer::fill_triangle(
 
 void Renderer::draw(const Object& object, const Texture* texture, bool wireframe)
 {
-    // object -> mesh -> list of triangles
+    const auto& vertices = object.posedVertices_.empty()
+        ? object.mesh_.vertices : object.posedVertices_;
+    screenVertices_.resize(vertices.size());
+    const float cosine = std::cos(object.rotation_);
+    const float sine = std::sin(object.rotation_);
+    for (std::size_t i = 0; i < vertices.size(); ++i)
+    {
+        Vertex vertex = vertices[i];
+        // Local -> screen: scale, rotate around the origin, then translate.
+        const Vec2 scaled{vertex.position.x * object.scale_.x,
+                          vertex.position.y * object.scale_.y};
+        const Vec2 rotated = rotate(scaled, cosine, sine);
+        vertex.position = {rotated.x + object.position_.x,
+                           rotated.y + object.position_.y};
+        screenVertices_[i] = vertex;
+    }
 
-	for (const Triangle& triangle : object.mesh_.triangles_)
-	{
-		// Apply the object's position, rotation, and scale to the triangle's vertices.
-		Triangle transformedTriangle = triangle;
-		for (Vertex& vertex : transformedTriangle.v)
-		{
-			// Scale
-			vertex.position.x *= object.scale_.x;
-			vertex.position.y *= object.scale_.y;
-			// Rotate
-			const float cosTheta = std::cos(object.rotation_);
-			const float sinTheta = std::sin(object.rotation_);
-			const float x = vertex.position.x * cosTheta - vertex.position.y * sinTheta;
-			const float y = vertex.position.x * sinTheta + vertex.position.y * cosTheta;
-			vertex.position.x = x;
-			vertex.position.y = y;
-			// Translate
-			vertex.position.x += object.position_.x;
-			vertex.position.y += object.position_.y;
-		}
-		// Draw the transformed triangle.
+    for (const TriangleIndices& indices : object.mesh_.triangles)
+    {
+        const Triangle triangle{{screenVertices_[indices[0]],
+                                 screenVertices_[indices[1]],
+                                 screenVertices_[indices[2]]}};
         if (wireframe)
         {
             constexpr std::uint32_t edgeColor = 0xFFB58DCEu;
             for (int edge = 0; edge < 3; ++edge)
             {
-                const Vec2 a = transformedTriangle.v[edge].position;
-                const Vec2 b = transformedTriangle.v[(edge + 1) % 3].position;
+                const Vec2 a = triangle.v[edge].position;
+                const Vec2 b = triangle.v[(edge + 1) % 3].position;
                 DrawLine(static_cast<int>(std::lround(a.x)),
                          static_cast<int>(std::lround(a.y)),
                          static_cast<int>(std::lround(b.x)),
                          static_cast<int>(std::lround(b.y)), edgeColor);
             }
         }
-        else if (texture != nullptr)
-            fill_triangle(*texture, transformedTriangle);
         else
-            fill_triangle(transformedTriangle);
-	}
+        {
+            rasterize(triangle, texture);
+        }
+    }
 }

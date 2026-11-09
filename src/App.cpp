@@ -1,10 +1,11 @@
 #include "App.h"
 
 #include "assets/TextureLoader.h"
-#include "assets/GothicGirlMesh.h"
+#include "assets/GothicGirl.h"
 
 #include <filesystem>
 #include <chrono>
+#include <utility>
 
 App::App(const char* title, int width, int height)
     : renderer_(width, height),
@@ -12,7 +13,9 @@ App::App(const char* title, int width, int height)
           std::filesystem::path{SOFTWARE_RENDERER_ASSET_DIR} / "gothic_girl.png")),
       platform_(title, width, height)
 {
-    gothicGirl_.mesh_ = makeGothicGirlMesh();
+    GothicGirlAsset asset = makeGothicGirl();
+    gothicGirl_.mesh_ = std::move(asset.mesh);
+    influences_ = std::move(asset.influences);
     const float imageHeight = static_cast<float>(renderer_.height()) * 0.90f;
     const float imageWidth = imageHeight *
         static_cast<float>(texture_.width()) / static_cast<float>(texture_.height());
@@ -30,16 +33,23 @@ int App::run()
         const float seconds = std::chrono::duration<float>(now - previousFrame).count();
         previousFrame = now;
 
-        constexpr float speed = 200.0f; // Framebuffer pixels per second.
-        const MovementInput input = platform_.movementInput();
-        gothicGirl_.position_.x += input.x * speed * seconds;
-        gothicGirl_.position_.y += input.y * speed * seconds;
-
+        update(seconds);
         draw();
         platform_.present(renderer_);
     }
 
     return 0;
+}
+
+void App::update(float seconds)
+{
+    constexpr float speed = 200.0f; // Framebuffer pixels per second.
+    const MovementInput input = platform_.movementInput();
+    gothicGirl_.position_.x += input.x * speed * seconds;
+    gothicGirl_.position_.y += input.y * speed * seconds;
+    animationTime_ += seconds;
+    skinMesh(gothicGirl_.mesh_, influences_, makeGothicGirlPose(animationTime_),
+             gothicGirl_.posedVertices_);
 }
 
 void App::draw()
